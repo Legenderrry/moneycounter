@@ -3,189 +3,183 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>💰 Wealth Progress Tracker</title>
+<title>💰 Wealth Flow Engine</title>
 
 <style>
 body {
-  margin: 0;
-  background: #0b0f14;
-  color: #00ff88;
-  font-family: monospace;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  margin:0;
+  background:#0b0f14;
+  color:#00ff88;
+  font-family:monospace;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
 
 .card {
-  width: 92%;
-  max-width: 640px;
-  background: #111826;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid #1f2a3a;
+  width:92%;
+  max-width:640px;
+  background:#111826;
+  padding:20px;
+  border-radius:16px;
+  border:1px solid #1f2a3a;
 }
 
-h1 { font-size: 15px; color: #8aa4c7; }
-.subtitle { font-size: 12px; color: #7f8fa6; margin-bottom: 10px; }
+h1 { font-size:15px; color:#8aa4c7; }
+.subtitle { font-size:12px; color:#7f8fa6; margin-bottom:10px; }
 
-.money {
-  font-size: 42px;
-  font-weight: bold;
-  transition: transform 0.15s ease;
+.banner {
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
+  text-align:center;
+  font-weight:bold;
+  white-space:pre-line;
 }
 
-.net { font-size: 22px; color: #4dd2ff; }
+.banner.early { background:#5a3e00; color:#ffd166; }
+.banner.after { background:#4a1111; color:#ff6b6b; }
+.banner.weekend { background:#2d1245; color:#d0a6ff; }
 
-.row { display: flex; gap: 10px; margin-bottom: 10px; }
+.money { font-size:42px; font-weight:bold; }
+.net { font-size:22px; color:#4dd2ff; }
+
+.row { display:flex; gap:10px; margin-bottom:10px; }
 
 input, select, button {
-  flex: 1;
-  padding: 10px;
-  background: #0c1320;
-  border: 1px solid #2a3a4d;
-  color: white;
-  border-radius: 8px;
+  flex:1;
+  padding:10px;
+  background:#0c1320;
+  border:1px solid #2a3a4d;
+  color:white;
+  border-radius:8px;
+  cursor:pointer;
 }
 
-button { cursor: pointer; }
+button:disabled {
+  opacity:0.35;
+  cursor:not-allowed;
+}
 
 .grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
 }
 
 .box {
-  background: #0c1320;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #1f2a3a;
+  background:#0c1320;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #1f2a3a;
 }
 
-.label { font-size: 12px; color: #7f8fa6; }
-.value { font-size: 14px; color: white; margin-top: 4px; }
+.label { font-size:12px; color:#7f8fa6; }
+.value { font-size:14px; color:white; }
 
-.mood { font-size: 14px; color: #ffcc66; margin-bottom: 5px; }
-.achievements { font-size: 13px; color: #ffd700; margin-bottom: 5px; }
-.status { font-size: 12px; color: #7f8fa6; }
+.small { font-size:12px; color:#8aa4c7; margin-top:5px; }
 </style>
 </head>
 
 <body>
 
 <div class="card">
-  <h1>💰 Daily Wealth Progress Tracker</h1>
-  <div class="subtitle">Clean real-time earnings tracker ⏱️</div>
 
-  <div class="row">
-    <select id="mode">
-      <option value="salary">Yearly Salary</option>
-      <option value="hourly">Hourly Rate</option>
-    </select>
+<h1>💰 Wealth Flow Engine</h1>
+<div class="subtitle">Live → Daily → Weekly progression system</div>
 
-    <input id="income" type="number" value="80000" />
+<div id="banner" class="banner"></div>
+
+<div class="row">
+  <select id="mode">
+    <option value="salary">Yearly Salary</option>
+    <option value="hourly">Hourly Rate</option>
+  </select>
+  <input id="income" type="number" value="80000"/>
+</div>
+
+<div class="row">
+  <button id="slackBtn" onclick="startSlacking()">🐟 摸鱼时间</button>
+  <button id="backBtn" onclick="stopSlacking()">🐂🐎 Back to Work</button>
+  <button onclick="clearSlack()">🧹 Clear Slack</button>
+</div>
+
+<div id="gross" class="money">$0.0000</div>
+<div id="net" class="net">$0.0000</div>
+
+<div id="actual" class="small"></div>
+<div id="slack" class="small"></div>
+
+<div id="clock" class="small"></div>
+<div id="progress" class="small"></div>
+<div id="countdown" class="small"></div>
+
+<div class="grid">
+  <div class="box">
+    <div class="label" id="grossLabel">Today Gross</div>
+    <div id="dailyGross" class="value"></div>
   </div>
 
-  <div class="row">
-    <button onclick="enableSound()">🔊 Enable Sound</button>
-    <button onclick="toggleSound()" id="soundBtn">Sound: ON</button>
+  <div class="box">
+    <div class="label" id="netLabel">Today Net</div>
+    <div id="dailyNet" class="value"></div>
   </div>
 
-  <div id="gross" class="money">$0.0000</div>
-  <div id="net" class="net">$0.0000</div>
-
-  <div id="mood" class="mood"></div>
-  <div id="achievements" class="achievements"></div>
-  <div id="status" class="status"></div>
-
-  <div class="grid">
-    <div class="box">
-      <div class="label">Today Gross</div>
-      <div id="dailyGross" class="value"></div>
-    </div>
-
-    <div class="box">
-      <div class="label">Today Net</div>
-      <div id="dailyNet" class="value"></div>
-    </div>
-
-    <div class="box">
-      <div class="label">Hourly</div>
-      <div id="hourly" class="value"></div>
-    </div>
-
-    <div class="box">
-      <div class="label">Net Hourly</div>
-      <div id="netHourly" class="value"></div>
-    </div>
+  <div class="box">
+    <div class="label">Hourly</div>
+    <div id="hourly" class="value"></div>
   </div>
+
+  <div class="box">
+    <div class="label">Actual Hourly</div>
+    <div id="netHourly" class="value"></div>
+  </div>
+</div>
+
 </div>
 
 <script>
 function el(id){ return document.getElementById(id); }
 
-/* ================= SOUND ================= */
-let audioCtx;
-let soundOn = true;
-
-function enableSound(){
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  alert("Sound enabled 🔊");
+/* ================= RATE ================= */
+function ratePerSecond(){
+  const v=parseFloat(el("income").value||0);
+  const mode=el("mode").value;
+  const hourly=(mode==="salary")?v/2080:v;
+  return hourly/3600;
 }
 
-function toggleSound(){
-  soundOn = !soundOn;
-  el("soundBtn").innerText = soundOn ? "Sound: ON" : "Sound: OFF";
+/* ================= TIME ================= */
+function isWeekday(d){ return d.getDay()>=1 && d.getDay()<=5; }
+function isWorkHours(d){ return d.getHours()>=9 && d.getHours()<17; }
+function isWorkingNow(d){ return isWeekday(d) && isWorkHours(d); }
+
+function workedSeconds(now){
+  const s=new Date(now); s.setHours(9,0,0,0);
+  const e=new Date(now); e.setHours(17,0,0,0);
+  if(now<s) return 0;
+  return ((now>e?e:now)-s)/1000;
 }
 
-/* 🎺 FAKE CHA-CHING (Option 2 upgraded synth) */
-function playChaChing(){
-  if(!audioCtx || !soundOn) return;
+/* ================= SLACK ================= */
+let slackStart=null;
+let totalSlackMs=0;
 
-  const notes = [
-    {f: 600, t: 0.05},
-    {f: 900, t: 0.06},
-    {f: 1200, t: 0.08}
-  ];
-
-  notes.forEach((n,i)=>{
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-
-    o.type = "triangle";
-    o.frequency.value = n.f;
-
-    g.gain.value = 0.06;
-
-    o.connect(g);
-    g.connect(audioCtx.destination);
-
-    o.start(audioCtx.currentTime + i * 0.05);
-    o.stop(audioCtx.currentTime + i * 0.12);
-  });
+function startSlacking(){
+  if(!slackStart) slackStart = performance.now();
 }
 
-/* small tick sound */
-function playTick(){
-  if(!audioCtx || !soundOn) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-
-  o.frequency.value = 500;
-  g.gain.value = 0.03;
-
-  o.connect(g);
-  g.connect(audioCtx.destination);
-
-  o.start();
-  o.stop(audioCtx.currentTime + 0.03);
+function stopSlacking(){
+  if(slackStart){
+    totalSlackMs += performance.now()-slackStart;
+    slackStart=null;
+  }
 }
 
-/* ================= FORMAT ================= */
-function fmt(x){
-  return "$" + (isFinite(x) ? x : 0).toFixed(4);
+function clearSlack(){
+  totalSlackMs = 0;
+  slackStart = null;
 }
 
 /* ================= TAX ================= */
@@ -209,113 +203,139 @@ function ontarioTax(x){
   return t;
 }
 
-function cpp(x){ return Math.min(x*0.0595,4500); }
-function ei(x){ return Math.min(x*0.0163,1123); }
-
 function deductions(a){
-  return federalTax(a)+ontarioTax(a)+cpp(a)+ei(a);
+  return federalTax(a)+ontarioTax(a)+Math.min(a*0.0595,4500)+Math.min(a*0.0163,1123);
 }
 
-/* ================= RATE ================= */
-function ratePerSecond(){
-  const mode = el("mode").value;
-  const v = parseFloat(el("income").value || 0);
-  const hourly = (mode === "salary") ? v / 2080 : v;
-  return hourly / 3600;
+/* ================= WEEK CALC ================= */
+function weeklyGross(annualGross){
+  return annualGross / 52;
+}
+function weeklyNet(annualNet){
+  return annualNet / 52;
 }
 
-/* ================= TIME ================= */
-function workedSeconds(now){
-  const s = new Date(now); s.setHours(9,0,0,0);
-  const e = new Date(now); e.setHours(17,0,0,0);
-  if(now < s) return 0;
-  return ((now > e ? e : now) - s) / 1000;
-}
+/* ================= BANNER SYSTEM ================= */
+function updateBanner(now, mode, gross, net){
 
-/* ================= MOOD ================= */
-function mood(g){
-  if(g < 50) return "Getting started ⏱️";
-  if(g < 150) return "Momentum building 📈";
-  if(g < 400) return "Nice progress 💪";
-  if(g < 800) return "Stacking income 🔥";
-  return "Elite earning mode 🚀";
-}
+  const b = el("banner");
+  const d = now.getDay();
+  const h = now.getHours();
 
-/* ================= ACHIEVEMENTS ================= */
-let unlocked = {};
-
-function checkAchievements(g){
-  const list = [
-    [0.5,"🥉 First cents!"],
-    [1,"🥉 $1 earned"],
-    [5,"🥉 Momentum started"],
-    [10,"🥈 Flow state"],
-    [20,"🥈 Stacking cash"],
-    [50,"🥇 Strong session"],
-    [100,"💰 High performer"],
-    [200,"🚀 Elite mode"],
-    [500,"👑 Unstoppable"]
-  ];
-
-  let msg = "";
-
-  for(const [a,t] of list){
-    if(g >= a && !unlocked[a]){
-      unlocked[a] = true;
-      msg += t + "<br>";
-      playChaChing();
-    }
-  }
-
-  if(msg) el("achievements").innerHTML = msg;
-}
-
-/* ================= POP EFFECT ================= */
-let lastDollar = 0;
-
-function pop(){
-  const e = el("gross");
-  e.style.transform = "scale(1.12)";
-  setTimeout(()=>e.style.transform="scale(1)",150);
-}
-
-/* ================= UPDATE ================= */
-function update(){
-  const now = new Date();
-  const rate = ratePerSecond();
-
-  const sec = workedSeconds(now);
-  const gross = sec * rate;
-
-  const whole = Math.floor(gross);
-
-  if(whole > lastDollar){
-    lastDollar = whole;
-    pop();
-    playTick();
-  }
+  b.className = "banner";
 
   const annual = gross * 260;
-  const netAnnual = annual - deductions(annual);
-  const netDaily = netAnnual / 260;
+  const annNet = annual - deductions(annual);
 
-  el("gross").innerText = fmt(gross);
-  el("net").innerText = fmt(netDaily);
+  const dailyFinalGross = annual / 260;
+  const dailyFinalNet = annNet / 260;
 
-  el("dailyGross").innerText = fmt(gross);
-  el("dailyNet").innerText = fmt(netDaily);
+  const weekGross = weeklyGross(annual);
+  const weekNet = weeklyNet(annNet);
 
-  el("hourly").innerText = fmt(rate * 3600);
-  el("netHourly").innerText = fmt(netDaily / 8);
+  /* WEEKEND MODE */
+  if(d === 0 || d === 6){
+    b.classList.add("weekend");
+    b.innerText =
+`🍻 GET A LIFE! NO WORK ON WEEKENDS!
 
-  el("mood").innerText = mood(gross);
+Week Completed ✅
 
-  el("status").innerText =
-    (now.getDay()>=1 && now.getDay()<=5 && now.getHours()>=9 && now.getHours()<17)
-    ? "🟢 Live earning session"
-    : "🔴 Off hours";
+Gross This Week: $${weekGross.toFixed(4)}
+Net This Week:   $${weekNet.toFixed(4)}
 
-  checkAchievements(gross);
+Hours Worked: 40.0
+Avg Hourly: ${(weekGross/40).toFixed(2)}
+
+Next Workday: Monday 9:00 AM`;
+    return;
+  }
+
+  /* BEFORE 9AM */
+  if(h < 9){
+    b.classList.add("early");
+    b.innerText = "☕ TOO EARLY, GO GET A COFFEE!";
+    return;
+  }
+
+  /* AFTER 5PM */
+  if(h >= 17){
+    b.classList.add("after");
+    b.innerText =
+`🚨 STOP WORKING! IT'S AFTER HOURS!
+
+Today's Final Earnings
+Gross: $${dailyFinalGross.toFixed(4)}
+Net:   $${dailyFinalNet.toFixed(4)}`;
+    return;
+  }
+
+  /* DURING WORK */
+  b.innerText = "";
+}
+
+/* ================= BUTTON LOCK ================= */
+function updateButtons(now){
+  const active = isWorkingNow(now);
+
+  el("slackBtn").disabled = !active;
+  el("backBtn").disabled = !active;
+}
+
+/* ================= MAIN LOOP ================= */
+function update(){
+
+  const now = new Date();
+  updateButtons(now);
+
+  const rate = ratePerSecond();
+  const workSec = workedSeconds(now);
+  const gross = workSec * rate;
+
+  const annualGross = gross * 260;
+  const annualNet = annualGross - deductions(annualGross);
+
+  const net = annualNet / 260;
+
+  /* SLACK */
+  let slackMs = totalSlackMs;
+  if(slackStart) slackMs += performance.now()-slackStart;
+
+  const slackSec = slackMs / 1000;
+
+  const effectiveHours = Math.max((workSec - slackSec)/3600, 0.01);
+  const actualHourly = gross / effectiveHours;
+
+  el("gross").innerText = "$" + gross.toFixed(4);
+  el("net").innerText = "$" + net.toFixed(4);
+
+  el("dailyGross").innerText = "$" + gross.toFixed(4);
+  el("dailyNet").innerText = "$" + net.toFixed(4);
+
+  el("hourly").innerText = "$" + (rate*3600).toFixed(2);
+  el("netHourly").innerText = "$" + actualHourly.toFixed(2);
+
+  el("actual").innerText =
+    "📉 Actual hourly (after slacking): $" + actualHourly.toFixed(2);
+
+  el("slack").innerText =
+    "🐟 Slacking: " + slackSec.toFixed(3) + " sec";
+
+  el("clock").innerText =
+    "🕒 " + now.toLocaleTimeString();
+
+  const s = new Date(now); s.setHours(9,0,0,0);
+  const e = new Date(now); e.setHours(17,0,0,0);
+
+  const prog = now<s?0:now>e?100:((now-s)/(e-s))*100;
+  el("progress").innerText =
+    "📊 Workday: " + prog.toFixed(1) + "%";
+
+  el("countdown").innerText =
+    now>e ? "🎉 Done for today" :
+    Math.floor((e-now)/3600000) + "h left";
+
+  updateBanner(now, null, gross, net);
 
   requestAnimationFrame(update);
 }
