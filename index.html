@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>💰 Wealth Progress Tracker</title>
+
+<style>
+body {
+  margin: 0;
+  background: #0b0f14;
+  color: #00ff88;
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  width: 92%;
+  max-width: 640px;
+  background: #111826;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #1f2a3a;
+}
+
+h1 { font-size: 15px; color: #8aa4c7; }
+.subtitle { font-size: 12px; color: #7f8fa6; margin-bottom: 10px; }
+
+.money {
+  font-size: 42px;
+  font-weight: bold;
+  transition: transform 0.15s ease;
+}
+
+.net { font-size: 22px; color: #4dd2ff; }
+
+.row { display: flex; gap: 10px; margin-bottom: 10px; }
+
+input, select, button {
+  flex: 1;
+  padding: 10px;
+  background: #0c1320;
+  border: 1px solid #2a3a4d;
+  color: white;
+  border-radius: 8px;
+}
+
+button { cursor: pointer; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.box {
+  background: #0c1320;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #1f2a3a;
+}
+
+.label { font-size: 12px; color: #7f8fa6; }
+.value { font-size: 14px; color: white; margin-top: 4px; }
+
+.mood { font-size: 14px; color: #ffcc66; margin-bottom: 5px; }
+.achievements { font-size: 13px; color: #ffd700; margin-bottom: 5px; }
+.status { font-size: 12px; color: #7f8fa6; }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>💰 Daily Wealth Progress Tracker</h1>
+  <div class="subtitle">Clean real-time earnings tracker ⏱️</div>
+
+  <div class="row">
+    <select id="mode">
+      <option value="salary">Yearly Salary</option>
+      <option value="hourly">Hourly Rate</option>
+    </select>
+
+    <input id="income" type="number" value="80000" />
+  </div>
+
+  <div class="row">
+    <button onclick="enableSound()">🔊 Enable Sound</button>
+    <button onclick="toggleSound()" id="soundBtn">Sound: ON</button>
+  </div>
+
+  <div id="gross" class="money">$0.0000</div>
+  <div id="net" class="net">$0.0000</div>
+
+  <div id="mood" class="mood"></div>
+  <div id="achievements" class="achievements"></div>
+  <div id="status" class="status"></div>
+
+  <div class="grid">
+    <div class="box">
+      <div class="label">Today Gross</div>
+      <div id="dailyGross" class="value"></div>
+    </div>
+
+    <div class="box">
+      <div class="label">Today Net</div>
+      <div id="dailyNet" class="value"></div>
+    </div>
+
+    <div class="box">
+      <div class="label">Hourly</div>
+      <div id="hourly" class="value"></div>
+    </div>
+
+    <div class="box">
+      <div class="label">Net Hourly</div>
+      <div id="netHourly" class="value"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function el(id){ return document.getElementById(id); }
+
+/* ================= SOUND ================= */
+let audioCtx;
+let soundOn = true;
+
+function enableSound(){
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  alert("Sound enabled 🔊");
+}
+
+function toggleSound(){
+  soundOn = !soundOn;
+  el("soundBtn").innerText = soundOn ? "Sound: ON" : "Sound: OFF";
+}
+
+/* 🎺 FAKE CHA-CHING (Option 2 upgraded synth) */
+function playChaChing(){
+  if(!audioCtx || !soundOn) return;
+
+  const notes = [
+    {f: 600, t: 0.05},
+    {f: 900, t: 0.06},
+    {f: 1200, t: 0.08}
+  ];
+
+  notes.forEach((n,i)=>{
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+
+    o.type = "triangle";
+    o.frequency.value = n.f;
+
+    g.gain.value = 0.06;
+
+    o.connect(g);
+    g.connect(audioCtx.destination);
+
+    o.start(audioCtx.currentTime + i * 0.05);
+    o.stop(audioCtx.currentTime + i * 0.12);
+  });
+}
+
+/* small tick sound */
+function playTick(){
+  if(!audioCtx || !soundOn) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+
+  o.frequency.value = 500;
+  g.gain.value = 0.03;
+
+  o.connect(g);
+  g.connect(audioCtx.destination);
+
+  o.start();
+  o.stop(audioCtx.currentTime + 0.03);
+}
+
+/* ================= FORMAT ================= */
+function fmt(x){
+  return "$" + (isFinite(x) ? x : 0).toFixed(4);
+}
+
+/* ================= TAX ================= */
+function federalTax(x){
+  const b=[[55867,0.15],[111733,0.205],[173205,0.26],[246752,0.29],[Infinity,0.33]];
+  let p=0,t=0;
+  for(const [l,r] of b){
+    if(x>l){t+=(l-p)*r;p=l;}
+    else {t+=(x-p)*r;break;}
+  }
+  return t;
+}
+
+function ontarioTax(x){
+  const b=[[51446,0.0505],[102894,0.0915],[150000,0.1116],[220000,0.1216],[Infinity,0.1316]];
+  let p=0,t=0;
+  for(const [l,r] of b){
+    if(x>l){t+=(l-p)*r;p=l;}
+    else {t+=(x-p)*r;break;}
+  }
+  return t;
+}
+
+function cpp(x){ return Math.min(x*0.0595,4500); }
+function ei(x){ return Math.min(x*0.0163,1123); }
+
+function deductions(a){
+  return federalTax(a)+ontarioTax(a)+cpp(a)+ei(a);
+}
+
+/* ================= RATE ================= */
+function ratePerSecond(){
+  const mode = el("mode").value;
+  const v = parseFloat(el("income").value || 0);
+  const hourly = (mode === "salary") ? v / 2080 : v;
+  return hourly / 3600;
+}
+
+/* ================= TIME ================= */
+function workedSeconds(now){
+  const s = new Date(now); s.setHours(9,0,0,0);
+  const e = new Date(now); e.setHours(17,0,0,0);
+  if(now < s) return 0;
+  return ((now > e ? e : now) - s) / 1000;
+}
+
+/* ================= MOOD ================= */
+function mood(g){
+  if(g < 50) return "Getting started ⏱️";
+  if(g < 150) return "Momentum building 📈";
+  if(g < 400) return "Nice progress 💪";
+  if(g < 800) return "Stacking income 🔥";
+  return "Elite earning mode 🚀";
+}
+
+/* ================= ACHIEVEMENTS ================= */
+let unlocked = {};
+
+function checkAchievements(g){
+  const list = [
+    [0.5,"🥉 First cents!"],
+    [1,"🥉 $1 earned"],
+    [5,"🥉 Momentum started"],
+    [10,"🥈 Flow state"],
+    [20,"🥈 Stacking cash"],
+    [50,"🥇 Strong session"],
+    [100,"💰 High performer"],
+    [200,"🚀 Elite mode"],
+    [500,"👑 Unstoppable"]
+  ];
+
+  let msg = "";
+
+  for(const [a,t] of list){
+    if(g >= a && !unlocked[a]){
+      unlocked[a] = true;
+      msg += t + "<br>";
+      playChaChing();
+    }
+  }
+
+  if(msg) el("achievements").innerHTML = msg;
+}
+
+/* ================= POP EFFECT ================= */
+let lastDollar = 0;
+
+function pop(){
+  const e = el("gross");
+  e.style.transform = "scale(1.12)";
+  setTimeout(()=>e.style.transform="scale(1)",150);
+}
+
+/* ================= UPDATE ================= */
+function update(){
+  const now = new Date();
+  const rate = ratePerSecond();
+
+  const sec = workedSeconds(now);
+  const gross = sec * rate;
+
+  const whole = Math.floor(gross);
+
+  if(whole > lastDollar){
+    lastDollar = whole;
+    pop();
+    playTick();
+  }
+
+  const annual = gross * 260;
+  const netAnnual = annual - deductions(annual);
+  const netDaily = netAnnual / 260;
+
+  el("gross").innerText = fmt(gross);
+  el("net").innerText = fmt(netDaily);
+
+  el("dailyGross").innerText = fmt(gross);
+  el("dailyNet").innerText = fmt(netDaily);
+
+  el("hourly").innerText = fmt(rate * 3600);
+  el("netHourly").innerText = fmt(netDaily / 8);
+
+  el("mood").innerText = mood(gross);
+
+  el("status").innerText =
+    (now.getDay()>=1 && now.getDay()<=5 && now.getHours()>=9 && now.getHours()<17)
+    ? "🟢 Live earning session"
+    : "🔴 Off hours";
+
+  checkAchievements(gross);
+
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+
+</body>
+</html>
